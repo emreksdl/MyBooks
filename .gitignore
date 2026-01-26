@@ -1,34 +1,52 @@
-### Java ###
+# Compiled files
+target/
 *.class
 *.jar
 *.war
-*.ear
-target/
-out/
 
-### Maven ###
-.mvn/
-mvnw
-mvnw.cmd
-
-### Gradle ###
-.gradle/
-build/
-
-### IDE ###
+# IDE files
 .idea/
 *.iml
 .vscode/
 *.swp
 *.swo
 
-### Environment & Database ###
-.env
+# Database
 *.db
+database.db
 
-### Logs ###
-*.log
+# Environment variables
+.env
 
-### OS ###
+# OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Log files
+logs/
+*.log
+application.log
+security.log
+suspicious.log
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Spring Boot
+spring-boot-starter-actuator/
+
+# Temporary files
+*.tmp
+*.temp
+
+# SSL/TLS Certificates (IMPORTANT: Never commit!)
+src/main/resources/keystore/
+*.p12
+*.jks
+*.key
+*.crt
+*.pem
+*.pfx

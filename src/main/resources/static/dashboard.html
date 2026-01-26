@@ -5,169 +5,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - MyBooks</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
 </head>
-<body class="bg-gray-100 min-h-screen">
-<!-- Navigation -->
-<nav class="bg-purple-600 text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <div class="flex items-center gap-8">
-                <h1 class="text-2xl font-bold">📚 MyBooks</h1>
-                <div class="hidden md:flex gap-4">
-                    <a href="dashboard.html" class="px-3 py-2 rounded-md bg-purple-700">Dashboard</a>
-                    <a href="books.html" class="px-3 py-2 rounded-md hover:bg-purple-700">Books</a>
-                    <a href="notes.html" class="px-3 py-2 rounded-md hover:bg-purple-700">Notes</a>
-                </div>
+<body class="bg-gradient-to-br from-green-400 to-orange-500 min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="bg-white shadow-lg">
+    <div class="container mx-auto px-6 py-4">
+        <div class="flex justify-between items-center">
+            <div class="text-2xl font-bold text-green-600">
+                📚 MyBooks
             </div>
-            <div class="flex items-center gap-4">
-                <span id="userEmail" class="text-sm"></span>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md">
-                    Logout
-                </button>
+
+            <!-- NAVIGATION LINKS -->
+            <div class="flex space-x-4">
+                <a href="/dashboard.html" class="text-gray-700 hover:text-green-600">Dashboard</a>
+                <a href="/books.html" class="text-gray-700 hover:text-green-600">Books</a>
+                <a href="/notes.html" class="text-gray-700 hover:text-green-600">Notes</a>
             </div>
+
+            <!-- LOGOUT BUTTON -->
+            <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition">
+                Logout
+            </button>
         </div>
     </div>
 </nav>
 
-<!-- Main Content -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Welcome Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome, <span id="username"></span>! 👋</h2>
-        <p class="text-gray-600">Here's an overview of your books and notes</p>
-    </div>
+<!-- MAIN CONTENT -->
+<div class="container mx-auto px-6 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Welcome to Dashboard</h1>
 
-    <!-- Stats Cards -->
-    <div class="grid md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 text-sm">Total Books</p>
-                    <p id="totalBooks" class="text-3xl font-bold text-purple-600">0</p>
-                </div>
-                <div class="text-5xl">📚</div>
+        <!-- Stats or Content Here -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-green-100 p-6 rounded-lg">
+                <h3 class="text-xl font-semibold text-green-800">Books</h3>
+                <p class="text-3xl font-bold text-green-600" id="bookCount">0</p>
             </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 text-sm">Total Notes</p>
-                    <p id="totalNotes" class="text-3xl font-bold text-blue-600">0</p>
-                </div>
-                <div class="text-5xl">📝</div>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 text-sm">Reading</p>
-                    <p id="readingBooks" class="text-3xl font-bold text-green-600">0</p>
-                </div>
-                <div class="text-5xl">📖</div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="grid md:grid-cols-2 gap-6">
-        <!-- Recent Books -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">Recent Books</h3>
-                <a href="books.html" class="text-purple-600 hover:underline text-sm">View All →</a>
+            <div class="bg-orange-100 p-6 rounded-lg">
+                <h3 class="text-xl font-semibold text-orange-800">Notes</h3>
+                <p class="text-3xl font-bold text-orange-600" id="noteCount">0</p>
             </div>
-            <div id="recentBooks" class="space-y-3">
-                <p class="text-gray-500 text-center py-4">No books yet. Add your first book!</p>
-            </div>
-            <a href="books.html" class="block mt-4 text-center bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700">
-                Add Book
-            </a>
-        </div>
 
-        <!-- Recent Notes -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">Recent Notes</h3>
-                <a href="notes.html" class="text-blue-600 hover:underline text-sm">View All →</a>
+            <div class="bg-blue-100 p-6 rounded-lg">
+                <h3 class="text-xl font-semibold text-blue-800">Profile</h3>
+                <p class="text-sm text-blue-600" id="userEmail">Loading...</p>
             </div>
-            <div id="recentNotes" class="space-y-3">
-                <p class="text-gray-500 text-center py-4">No notes yet. Create your first note!</p>
-            </div>
-            <a href="notes.html" class="block mt-4 text-center bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
-                Add Note
-            </a>
         </div>
     </div>
 </div>
 
+<!-- LOGOUT SCRIPT -->
 <script>
-    // Check authentication
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = 'login.html';
-    }
+    // ==========================================
+    // LOGOUT FUNCTIONALITY
+    // ==========================================
 
-    // Display user info
-    document.getElementById('username').textContent = localStorage.getItem('username');
-    document.getElementById('userEmail').textContent = localStorage.getItem('email');
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("📄 Dashboard loaded");
 
-    // Fetch stats
-    async function fetchStats() {
+        // Find logout button
+        const logoutButton = document.getElementById("logoutButton");
+
+        if (logoutButton) {
+            console.log(" Logout button found");
+
+            // Add click event
+            logoutButton.addEventListener("click", async function(e) {
+                e.preventDefault();
+
+                console.log(" Logout initiated");
+
+                try {
+                    // Send logout request to backend
+                    console.log("📤 Sending logout request...");
+
+                    const response = await fetch("/api/auth/logout", {
+                        method: "POST",
+                        credentials: "include",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    console.log("📥 Response status:", response.status);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log("✅ Logout successful:", data);
+                    } else {
+                        console.warn("⚠️ Logout response not OK:", response.status);
+                    }
+
+                } catch (error) {
+                    console.error("❌ Logout error:", error);
+                } finally {
+                    // Always cleanup and redirect
+                    console.log("🧹 Cleaning up...");
+
+                    // Clear storage
+                    try {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        console.log("🗑️ Storage cleared");
+                    } catch (e) {
+                        console.warn("⚠️ Storage clear error:", e);
+                    }
+
+                    // Redirect to login
+                    console.log("🔄 Redirecting to login...");
+                    window.location.href = "/login.html";
+                }
+            });
+
+        } else {
+            console.error("❌ Logout button not found! Check ID: 'logoutButton'");
+        }
+
+        // ==========================================
+        // LOAD USER INFO (Optional)
+        // ==========================================
+        loadUserInfo();
+    });
+
+    // Load user information
+    async function loadUserInfo() {
         try {
-            // Fetch books
-            const booksResponse = await fetch('http://localhost:8080/api/books', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const response = await fetch("/api/auth/me", {
+                credentials: "include"
             });
-            const books = await booksResponse.json();
-            document.getElementById('totalBooks').textContent = books.length;
 
-            const readingBooks = books.filter(b => b.readingStatus === 'READING');
-            document.getElementById('readingBooks').textContent = readingBooks.length;
-
-            // Display recent books
-            if (books.length > 0) {
-                const recentBooksHtml = books.slice(0, 3).map(book => `
-                    <div class="border-l-4 border-purple-500 pl-3 py-2">
-                        <p class="font-semibold text-gray-800">${book.title}</p>
-                        <p class="text-sm text-gray-600">${book.author}</p>
-                    </div>
-                `).join('');
-                document.getElementById('recentBooks').innerHTML = recentBooksHtml;
-            }
-
-            // Fetch notes
-            const notesResponse = await fetch('http://localhost:8080/api/notes', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const notes = await notesResponse.json();
-            document.getElementById('totalNotes').textContent = notes.length;
-
-            // Display recent notes
-            if (notes.length > 0) {
-                const recentNotesHtml = notes.slice(0, 3).map(note => `
-                    <div class="border-l-4 border-blue-500 pl-3 py-2">
-                        <p class="font-semibold text-gray-800">${note.title}</p>
-                        <p class="text-sm text-gray-600">${note.content.substring(0, 50)}...</p>
-                    </div>
-                `).join('');
-                document.getElementById('recentNotes').innerHTML = recentNotesHtml;
+            if (response.ok) {
+                const user = await response.json();
+                document.getElementById("userEmail").textContent = user.email;
+            } else {
+                // Not authenticated, redirect to login
+                window.location.href = "/login.html";
             }
         } catch (error) {
-            console.error('Error fetching stats:', error);
+            console.error("Failed to load user info:", error);
         }
     }
 
-    function logout() {
-        localStorage.clear();
-        window.location.href = 'index.html';
+    // Load stats (Optional)
+    async function loadStats() {
+        try {
+            // Load book count
+            const booksResponse = await fetch("/api/books", {
+                credentials: "include"
+            });
+            if (booksResponse.ok) {
+                const books = await booksResponse.json();
+                document.getElementById("bookCount").textContent = books.length;
+            }
+
+            // Load note count
+            const notesResponse = await fetch("/api/notes", {
+                credentials: "include"
+            });
+            if (notesResponse.ok) {
+                const notes = await notesResponse.json();
+                document.getElementById("noteCount").textContent = notes.length;
+            }
+        } catch (error) {
+            console.error("Failed to load stats:", error);
+        }
     }
 
     // Load stats on page load
-    fetchStats();
+    loadStats();
 </script>
+
 </body>
 </html>

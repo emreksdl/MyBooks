@@ -1,18 +1,17 @@
 package com.example.mybooks.exception;
 
-import com.example.mybooks.dto.ApiResponse;
+import com.example.mybooks.service.SecurityLogger;
+import com.example.mybooks.util.IpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,128 +19,173 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final SecurityLogger securityLogger;
+
+    public GlobalExceptionHandler(SecurityLogger securityLogger) {
+        this.securityLogger = securityLogger;
+    }
+
+    /**
+     * Task 3.1: Log and handle 401 Unauthorized errors
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(
+            AuthenticationException ex, HttpServletRequest request) {
+
+        String ipAddress = IpUtil.getClientIpAddress(request);
+        String endpoint = request.getRequestURI();
+
+        // Task 3.1: Log unauthorized access attempt
+        securityLogger.logUnauthorizedAccess(endpoint, ipAddress, ex.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Authentication failed");
+        response.put("timestamp", System.currentTimeMillis());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    /**
+     * Task 3.1: Log and handle 403 Forbidden errors
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
+            AccessDeniedException ex, HttpServletRequest request) {
+
+        String ipAddress = IpUtil.getClientIpAddress(request);
+        String endpoint = request.getRequestURI();
+
+        // Get authenticated user if available
+        String email = request.getUserPrincipal() != null
+                ? request.getUserPrincipal().getName()
+                : "anonymous";
+
+        // Task 3.1: Log forbidden access attempt
+        securityLogger.logForbiddenAccess(endpoint, email, ipAddress);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Access denied");
+        response.put("timestamp", System.currentTimeMillis());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    /**
+     * Task 3.2: Log and handle validation errors (repeated invalid input)
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handleValidationExceptions(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleValidationException(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
+        String ipAddress = IpUtil.getClientIpAddress(request);
 
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+        ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
 
-        ApiResponse<?> response = ApiResponse.error("Validation failed", errors);
-        response.setPath(request.getRequestURI());
+        // Task 3.2: Log suspicious repeated invalid input
+        if (errors.size() > 3) {
+            securityLogger.logSuspiciousActivity("MULTIPLE_VALIDATION_ERRORS",
+                    "Fields: " + errors.keySet(), ipAddress);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Validation failed");
+        response.put("errors", errors);
+        response.put("timestamp", System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    /**
+     * Handle bad credentials exception
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(
+            BadCredentialsException ex, HttpServletRequest request) {
+
+        String ipAddress = IpUtil.getClientIpAddress(request);
+
+        // Already logged in AuthController, just return response
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Invalid credentials");
+        response.put("timestamp", System.currentTimeMillis());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    /**
+     * Handle illegal argument exceptions
+     */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<?>> handleIllegalArgumentException(
-            IllegalArgumentException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
 
-        ApiResponse<?> response = ApiResponse.error(ex.getMessage());
-        response.setPath(request.getRequestURI());
+        String ipAddress = IpUtil.getClientIpAddress(request);
+
+        // Check if it might be a suspicious request
+        String message = ex.getMessage();
+        if (message != null && (message.contains("DROP") || message.contains("DELETE") ||
+                message.contains("<script>") || message.contains("javascript:"))) {
+            securityLogger.logSuspiciousActivity("SUSPICIOUS_INPUT", message, ipAddress);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Invalid request");
+        response.put("timestamp", System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    /**
+     * Handle security exceptions (from service layer)
+     */
     @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ApiResponse<?>> handleSecurityException(
-            SecurityException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleSecurityException(
+            SecurityException ex, HttpServletRequest request) {
 
-        ApiResponse<?> response = ApiResponse.error(ex.getMessage());
-        response.setPath(request.getRequestURI());
+        String ipAddress = IpUtil.getClientIpAddress(request);
+        String endpoint = request.getRequestURI();
+        String email = request.getUserPrincipal() != null
+                ? request.getUserPrincipal().getName()
+                : "anonymous";
+
+        // Task 3.1: Log forbidden access (data-level)
+        securityLogger.logForbiddenAccess(endpoint, email, ipAddress);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Access denied");
+        response.put("timestamp", System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiResponse<?>> handleAuthenticationException(
-            AuthenticationException ex,
-            HttpServletRequest request) {
-
-        String message = "Authentication required";
-        if (ex instanceof BadCredentialsException) {
-            message = "Invalid credentials";
-        }
-
-        ApiResponse<?> response = ApiResponse.error(message);
-        response.setPath(request.getRequestURI());
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .header("WWW-Authenticate", "Basic realm=\"MyBooks\"")
-                .body(response);
-    }
-
-    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ApiResponse<?>> handleUnsupportedMediaType(
-            HttpMediaTypeNotSupportedException ex,
-            HttpServletRequest request) {
-
-        String message = "Unsupported Media Type: " + ex.getContentType();
-        ApiResponse<?> response = ApiResponse.error(message);
-        response.setPath(request.getRequestURI());
-
-        Map<String, String> details = new HashMap<>();
-        details.put("supported", ex.getSupportedMediaTypes().toString());
-        response.setErrors(details);
-
-        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(response);
-    }
-
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApiResponse<?>> handleMethodNotSupported(
-            HttpRequestMethodNotSupportedException ex,
-            HttpServletRequest request) {
-
-        String message = "Method " + ex.getMethod() + " not supported for this endpoint";
-        ApiResponse<?> response = ApiResponse.error(message);
-        response.setPath(request.getRequestURI());
-
-        Map<String, String> details = new HashMap<>();
-        details.put("supported", String.join(", ", ex.getSupportedMethods()));
-        response.setErrors(details);
-
-        return ResponseEntity
-                .status(HttpStatus.METHOD_NOT_ALLOWED)
-                .header("Allow", String.join(", ", ex.getSupportedMethods()))
-                .body(response);
-    }
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<?>> handleTypeMismatchException(
-            MethodArgumentTypeMismatchException ex,
-            HttpServletRequest request) {
-
-        String message = "Invalid parameter: " + ex.getName();
-        ApiResponse<?> response = ApiResponse.error(message);
-        response.setPath(request.getRequestURI());
-
-        Map<String, String> details = new HashMap<>();
-        details.put("parameter", ex.getName());
-        details.put("expectedType", ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
-        details.put("providedValue", ex.getValue() != null ? ex.getValue().toString() : "null");
-        response.setErrors(details);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
+    /**
+     * Generic exception handler (500 Internal Server Error)
+     */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleGenericException(
-            Exception ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleGenericException(
+            Exception ex, HttpServletRequest request) {
 
-        ApiResponse<?> response = ApiResponse.error("An unexpected error occurred");
-        response.setPath(request.getRequestURI());
+        String ipAddress = IpUtil.getClientIpAddress(request);
 
-        // Log the full exception for debugging
-        ex.printStackTrace();
+        // Log error (but not sensitive details)
+        securityLogger.logSuspiciousActivity("SERVER_ERROR",
+                "Endpoint: " + request.getRequestURI(), ipAddress);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Internal server error");
+        response.put("timestamp", System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
