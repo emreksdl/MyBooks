@@ -206,3 +206,65 @@ File upload handling
 Global exception handling
 
 Validation mechanisms
+
+TESTING
+
+The project includes automated tests to verify core business logic, security, and application behavior.
+
+Unit Tests
+
+Service layer tests using mocked repositories (Mockito)
+
+UserService tests for:
+
+Password hashing
+
+Input validation
+
+Entity validation tests
+
+Integration Tests
+
+Authentication flow tests (register, login, protected endpoints)
+
+JWT-based access control verification
+
+Ensuring users cannot access other users’ data
+
+MVC tests for secured endpoints
+
+CSRF token validation for form submissions
+
+Tests are located under:
+
+src/test/java
+
+To run tests locally:
+
+mvn test
+
+CI / CD (GitHub Actions)
+
+This project uses GitHub Actions for Continuous Integration.
+
+Workflow Features
+
+Automatically triggered on push and pull_request
+
+Runs mvn test
+
+Build fails if any test fails
+
+Generates test and build logs for verification
+
+Workflow Location
+
+.github/workflows/ci.yml
+
+Optional Quality Tools
+
+JaCoCo code coverage reporting
+
+Code style and static analysis tools (e.g. Checkstyle / SpotBugs)
+
+The CI pipeline ensures code quality and prevents broken builds from being merged.
