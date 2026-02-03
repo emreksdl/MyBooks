@@ -22,8 +22,14 @@ public class UserService {
 
     @Transactional
     public User createUser(CreateUserRequest request) {
+        // Email kontrolü
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
+        }
+
+        // Username kontrolü (YENİ EKLE)
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("Username already exists");
         }
 
         User user = new User();
@@ -47,6 +53,11 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     public Optional<User> findById(Long id) {

@@ -1,6 +1,7 @@
 package com.example.mybooks.config;
 
 import com.example.mybooks.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +33,7 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
                           SecurityHeadersFilter securityHeadersFilter,
-                          RateLimiterFilter rateLimiterFilter) {
+                          @Autowired(required = false) RateLimiterFilter rateLimiterFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.securityHeadersFilter = securityHeadersFilter;
         this.rateLimiterFilter = rateLimiterFilter;
@@ -89,7 +90,7 @@ public class SecurityConfig {
                                         "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com")
                         )
 
-                        // Task 5.3: HSTS (Strict-Transport-Security) - configured in SecurityHeadersFilter
+                        // Task 5.3: HSTS (Strict-Transport-Security)
                         .httpStrictTransportSecurity(hsts -> {
                             if (sslEnabled) {
                                 hsts.includeSubDomains(true)
@@ -120,13 +121,18 @@ public class SecurityConfig {
                                 "/api/upload/book-covers/**"
                         ).permitAll()
                         .anyRequest().authenticated()
-                )
-                // Task 4: Add Rate Limiter Filter
-                .addFilterBefore(rateLimiterFilter, UsernamePasswordAuthenticationFilter.class)
-                // Task 2: Add Security Headers Filter
-                .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
-                // JWT Authentication Filter
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                );
+
+        // Task 2: Add Security Headers Filter
+        http.addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // Task 4: Add Rate Limiter Filter (if available)
+        if (rateLimiterFilter != null) {
+            http.addFilterBefore(rateLimiterFilter, UsernamePasswordAuthenticationFilter.class);
+        }
+
+        // JWT Authentication Filter
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

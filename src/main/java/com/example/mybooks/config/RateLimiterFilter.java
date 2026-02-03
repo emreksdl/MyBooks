@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;  // ← YENİ
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,8 +23,14 @@ import java.util.Map;
  * Applies rate limiting to sensitive endpoints to prevent brute-force attacks.
  */
 @Component
-@Order(1) // Execute before other filters
+@Order(1)
+@ConditionalOnProperty(
+        name = "rate.limit.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class RateLimiterFilter extends OncePerRequestFilter {
+
 
     private final RateLimiterService rateLimiterService;
     private final SecurityLogger securityLogger;
